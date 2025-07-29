@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Dashboard - Dashboard</title>
+    <script>
+        const baseURL = "http://100.90.249.20:8080/vpn-backend";
+        const username = localStorage.getItem("username") || "guest";
+
+        async function fetchUserLogs() {
+            const response = await fetch(`${baseURL}/fetch-user-logs?username=${encodeURIComponent(username)}`);
+            const data = await response.json();
+            document.getElementById("userLogs").innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function fetchTrainingLogs() {
+            const response = await fetch(`${baseURL}/fetch-training-logs?username=${encodeURIComponent(username)}`);
+            const data = await response.json();
+            document.getElementById("trainingLogs").innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function fetchAuditLogs() {
+            const response = await fetch(`${baseURL}/fetch-audit-logs`);
+            const data = await response.json();
+            document.getElementById("auditLogs").innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function postDeviceLog() {
+            const log = prompt("Enter log data:");
+            if (!log) return;
+            const response = await fetch(`${baseURL}/logs`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `username=${encodeURIComponent(username)}&log_data=${encodeURIComponent(log)}`
+            });
+            const data = await response.json();
+            alert(data.message);
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    </script>
+</head>
+<body>
+<h1>Welcome, <span id="user"></span></h1>
+<button onclick="logout()">Logout</button>
+
+<h2>Device Log</h2>
+<button onclick="postDeviceLog()">Post Device Log</button>
+
+<h2>Fetch User Logs</h2>
+<button onclick="fetchUserLogs()">Fetch</button>
+<pre id="userLogs"></pre>
+
+<h2>Fetch Training Logs</h2>
+<button onclick="fetchTrainingLogs()">Fetch</button>
+<pre id="trainingLogs"></pre>
+
+<h2>Fetch Audit Logs</h2>
+<button onclick="fetchAuditLogs()">Fetch</button>
+<pre id="auditLogs"></pre>
+
+<script>
+    document.getElementById("user").innerText = username;
+</script>
+</body>
+</html>
+

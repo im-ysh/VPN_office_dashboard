@@ -1,0 +1,58 @@
+package com.vpn.backend;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import javax.servlet.annotation.*;
+
+@WebServlet("/submit-training-log")
+public class TrainingLogServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+    	// Add to ALL your servlets' doGet() and doPost() methods
+    	response.setHeader("Access-Control-Allow-Origin", "*");
+    	response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    	response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    	
+        String username = request.getParameter("username");
+        String topic = request.getParameter("topic");
+        String scoreStr = request.getParameter("score");
+        String remarks = request.getParameter("remarks");
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        if (username == null || topic == null || scoreStr == null) {
+            out.print("{\"status\":\"error\",\"message\":\"Missing required parameters\"}");
+            return;
+        }
+
+        try (Connection conn = DBUtil.getConnection()) {
+            String sql = "INSERT INTO training_logs (username, topic, score, remarks) VALUES (?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, topic);
+            stmt.setInt(3, Integer.parseInt(scoreStr));
+            stmt.setString(4, remarks != null ? remarks : "");
+
+            int rows = stmt.executeUpdate();
+
+            if (rows > 0) {
+            	
+            	 // Insert audit log
+                DBUtil.insertAuditLog(username, "TRAINING", "training_logs", "Training log submitted: " + topic);
+
+                out.print("{\"status\":\"success\",\"message\":\"Training log submitted\"}");
+            } else {
+                out.print("{\"status\":\"fail\",\"message\":\"Submission failed\"}");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.print("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+}

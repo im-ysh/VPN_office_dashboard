@@ -1,0 +1,47 @@
+package com.vpn.backend;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class RegisterServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        String role = request.getParameter("role");
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        try (Connection conn = DBUtil.getConnection()) {
+            String sql = "INSERT INTO login_credentials (username, password, role) VALUES (?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.setString(3, role);
+
+            int rows = stmt.executeUpdate();
+            if (rows > 0) {
+                out.print("{\"status\":\"success\", \"message\":\"User registered\"}");
+            } else {
+                out.print("{\"status\":\"fail\", \"message\":\"Registration failed\"}");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.print("{\"status\":\"error\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+        out.print("{\"status\":\"success\", \"message\":\"GET request received for RegisterServlet\"}");
+    }
+}

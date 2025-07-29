@@ -1,0 +1,54 @@
+package com.vpn.backend;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class DeviceLogServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        try {
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = request.getReader();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+
+            String requestBody = sb.toString();
+            System.out.println("Received Logs: " + requestBody);
+
+            // Save into DB
+            String username = request.getParameter("username");
+            String ip = request.getRemoteAddr();
+
+            try (Connection conn = DBUtil.getConnection()) {
+                String sql = "INSERT INTO vpn_logs (username, log_data, ip_address) VALUES (?, ?, ?)";
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                stmt.setString(1, username);
+                stmt.setString(2, requestBody);
+                stmt.setString(3, ip);
+                stmt.executeUpdate();
+            }
+
+            out.print("{\"status\":\"success\", \"message\":\"Log received\"}");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.print("{\"status\":\"error\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+        out.print("{\"status\":\"success\", \"message\":\"GET received\"}");
+    }
+}
+
+

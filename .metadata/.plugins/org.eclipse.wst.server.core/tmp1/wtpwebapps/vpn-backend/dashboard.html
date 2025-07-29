@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPN Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .logo p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #ff6b6b, #f06595);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(240, 101, 149, 0.3);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #20c997, #12b886);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(18, 184, 134, 0.3);
+        }
+
+        .log-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-message {
+            color: #6c757d;
+            font-style: italic;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="logo">
+                <h1>OpenVPN Dashboard</h1>
+                <p>Welcome back, <span id="user"></span></p>
+            </div>
+            <div class="user-info">
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Device Log</h2>
+                <button id="postDeviceLogBtn" class="btn">Post Device Log</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">User Logs</h2>
+                <button id="fetchUserBtn" class="btn">Fetch User Logs</button>
+            </div>
+            <div id="userLogsStatus" class="status-message">No data fetched yet</div>
+            <div class="log-container">
+                <table id="userLogsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Log Data</th>
+                            <th>IP Address</th>
+                            <th>Device Info</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Training Logs</h2>
+                <button id="fetchTrainingBtn" class="btn">Fetch Training Logs</button>
+            </div>
+            <div id="trainingLogsStatus" class="status-message">No data fetched yet</div>
+            <div class="log-container">
+                <table id="trainingLogsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Topic</th>
+                            <th>Score</th>
+                            <th>Remarks</th>
+                            <th>Attempted At</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Audit Logs</h2>
+                <button id="fetchAuditBtn" class="btn">Fetch Audit Logs</button>
+            </div>
+            <div id="auditLogsStatus" class="status-message">No data fetched yet</div>
+            <div class="log-container">
+                <table id="auditLogsTable">
+                    <thead>
+                        <tr>
+                            <th>Action By</th>
+                            <th>Action Type</th>
+                            <th>Target Table</th>
+                            <th>Details</th>
+                            <th>Action Time</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseURL = "http://100.90.249.20:8080/vpn-backend";
+        const username = localStorage.getItem("username") || "guest";
+        document.getElementById("user").textContent = username;
+
+        const fetchConfig = {
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        };
+
+        function populateTable(tableId, statusId, data, key) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            const statusElement = document.getElementById(statusId);
+            tableBody.innerHTML = '';
+
+            if (!data || !data[key] || data[key].length === 0) {
+                statusElement.textContent = "No logs found.";
+                return;
+            }
+
+            const logs = data[key];
+            statusElement.textContent = `Showing ${logs.length} log entries`;
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = Object.values(log).map(val => `<td>${val}</td>`).join('');
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function fetchWithLogging(endpoint, tableId, statusId, key) {
+            try {
+                document.getElementById(statusId).textContent = "Loading...";
+                const response = await fetch(endpoint, fetchConfig);
+                const data = await response.json();
+                populateTable(tableId, statusId, data, key);
+            } catch (error) {
+                document.getElementById(statusId).textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function fetchUserLogs() {
+            await fetchWithLogging(`${baseURL}/fetch-user-logs?username=${encodeURIComponent(username)}`, 'userLogsTable', 'userLogsStatus', 'logs');
+        }
+
+        async function fetchTrainingLogs() {
+            try {
+                document.getElementById('trainingLogsStatus').textContent = 'Loading...';
+                const response = await fetch(`${baseURL}/fetch-training-logs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(username)}`
+                });
+                const data = await response.json();
+                populateTable('trainingLogsTable', 'trainingLogsStatus', data, 'training_logs');
+            } catch (error) {
+                document.getElementById('trainingLogsStatus').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function fetchAuditLogs() {
+            await fetchWithLogging(`${baseURL}/fetch-audit-logs`, 'auditLogsTable', 'auditLogsStatus', 'audit_logs');
+        }
+
+        async function postDeviceLog() {
+            const log = prompt("Enter log data:");
+            if (!log) return;
+            try {
+                const response = await fetch(`${baseURL}/logs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(username)}&log_data=${encodeURIComponent(log)}`
+                });
+                const data = await response.json();
+                alert(data.message || "Log posted successfully");
+                fetchUserLogs();
+            } catch (error) {
+                alert("Failed to post log");
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "index.html";
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById("fetchUserBtn").addEventListener("click", fetchUserLogs);
+            document.getElementById("fetchTrainingBtn").addEventListener("click", fetchTrainingLogs);
+            document.getElementById("fetchAuditBtn").addEventListener("click", fetchAuditLogs);
+            document.getElementById("postDeviceLogBtn").addEventListener("click", postDeviceLog);
+            document.getElementById("logoutBtn").addEventListener("click", logout);
+
+            fetchUserLogs();
+            fetchTrainingLogs();
+            fetchAuditLogs();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+package com.vpn.backend;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http;
+import javax.servlet.annotation.WebServlet;
+
+@WebServlet("/logs")  // Make sure this maps correctly in web.xml or annotation
+public class DeviceLogServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        try {
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = request.getReader();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+
+            String requestBody = sb.toString();
+            System.out.println("Received Logs: " + requestBody);
+
+            // Assuming request is like: username=vaishnavi&log=connected_to_VPN
+            String[] params = requestBody.split("&");
+            String username = "";
+            String log = "";
+            for (String param : params) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length == 2) {
+                    if (keyValue[0].equals("username")) username = keyValue[1];
+                    if (keyValue[0].equals("log")) log = keyValue[1];
+                }
+            }
+
+            if (!username.isEmpty() && !log.isEmpty()) {
+                try (Connection conn = DBUtil.getConnection()) {
+                    String sql = "INSERT INTO vpn_logs (username, log_data) VALUES (?, ?)";
+                    PreparedStatement stmt = conn.prepareStatement(sql);
+                    stmt.setString(1, username);
+                    stmt.setString(2, log);
+                    stmt.executeUpdate();
+                }
+                out.print("{\"status\":\"success\", \"message\":\"Log inserted\"}");
+            } else {
+                out.print("{\"status\":\"fail\", \"message\":\"Missing parameters\"}");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.print("{\"status\":\"error\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+        out.print("{\"status\":\"success\", \"message\":\"GET received for logs\"}");
+    }
+}
+

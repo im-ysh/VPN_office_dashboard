@@ -1,0 +1,8 @@
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:00:52:05 +0530] "GET /vpn-backend/fetch-audit-logs HTTP/1.1" 200 2
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:00:56:42 +0530] "GET /vpn-backend/fetch-audit-logs HTTP/1.1" 200 2
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:01:09:30 +0530] "GET /vpn-backend/fetch-audit-logs HTTP/1.1" 200 2
+127.0.0.1 - - [12/Jul/2025:01:09:41 +0530] "GET / HTTP/1.1" 404 752
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:01:09:47 +0530] "GET /vpn-backend/fetch-audit-logs HTTP/1.1" 200 2
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:01:09:55 +0530] "GET /vpn-backend/fetch-audit-logs HTTP/1.1" 200 2
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:01:10:00 +0530] "POST /vpn-backend/submit-training-log HTTP/1.1" 200 55
+0:0:0:0:0:0:0:1 - - [12/Jul/2025:01:10:19 +0530] "GET /vpn-backend/fetch-audit-logs HTTP/1.1" 200 168

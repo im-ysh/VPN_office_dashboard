@@ -1,0 +1,65 @@
+package com.vpn.backend;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.*;
+
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+
+
+public class LoginServlet extends HttpServlet{
+	private static final long serialVersionUID = 1L;
+	
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+	       throws ServletException,IOException {
+		
+	    // Reject non-Tailscale IPs
+	    String clientIP = request.getRemoteAddr();
+	    if (!clientIP.startsWith("100.")) {
+	        response.setStatus(403);
+	        response.getWriter().print("{\"error\":\"Connect via Tailscale VPN first.\"}");
+	        return;
+	    }
+
+		
+		String username = request.getParameter("username");
+		String password  = request.getParameter("password");
+		
+		try(Connection conn = DBUtil.getConnection()) {
+			String sql = "SELECT role FROM vpn_users WHERE username = ? AND password = ?";
+			PreparedStatement stmt = conn.prepareStatement(sql);
+			stmt.setString(1,username);
+			stmt.setString(2,password);
+			
+			ResultSet rs = stmt.executeQuery();
+			
+			response.setContentType("application/json");
+			PrintWriter out = response.getWriter();
+			
+			if(rs.next()) {
+				String role = rs.getString("role");
+                out.print("{\"status\":\"success\", \"role\":\"" + role + "\"}");
+			} else {
+                out.print("{\"status\":\"fail\", \"message\":\"Invalid credentials\"}");
+			}
+		} catch (Exception e) {
+            throw new ServletException("DB error: " + e.getMessage());
+		}
+	}
+	
+	@Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+        out.print("{\"status\":\"success\", \"message\":\"GET request working for LoginServlet\"}");
+    }	
+}
+
+
+

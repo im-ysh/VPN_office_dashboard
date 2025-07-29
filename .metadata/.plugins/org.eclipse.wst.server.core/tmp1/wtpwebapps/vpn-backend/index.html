@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenVPN Dashboard - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .auth-tab.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .auth-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .auth-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group small {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .send-token-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            margin-bottom: 1rem;
+        }
+
+        .send-token-btn:hover {
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .vpn-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1.5rem;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .vpn-status.connected .status-indicator {
+            background: #28a745;
+        }
+
+        .guest-info {
+            text-align: center;
+            padding: 1rem 0;
+        }
+        
+        .guest-features {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0;
+        }
+        
+        .feature-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .feature-icon {
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .guest-note {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #fff3cd;
+            border-radius: 8px;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .guest-note small {
+            color: #856404;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 1.5rem;
+                margin: 10px;
+            }
+            
+            .logo h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>OpenVPN</h1>
+            <p>Dashboard</p>
+        </div>
+        
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+        
+        <div class="auth-tabs">
+            <div class="auth-tab active" data-tab="login">Login</div>
+            <div class="auth-tab" data-tab="register">Register</div>
+            <div class="auth-tab" data-tab="guest">Guest</div>
+        </div>
+        
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-content active">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="login-btn">Sign In</button>
+            
+            <div class="forgot-password">
+                <a href="#" onclick="showForgotPassword()">Forgot your password?</a>
+            </div>
+        </form>
+        
+        <!-- Registration Form -->
+        <form id="registerForm" class="auth-content">
+            <div class="input-group">
+                <label for="reg_username">Username</label>
+                <input type="text" id="reg_username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="input-group">
+                <label for="reg_email">Email</label>
+                <input type="email" id="reg_email" name="email" required autocomplete="email">
+            </div>
+            
+            <div class="input-group">
+                <label for="reg_password">Password</label>
+                <input type="password" id="reg_password" name="password" required autocomplete="new-password">
+                <small>Password must be at least 6 characters</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+            </div>
+            
+            <button type="submit" class="login-btn">Create Account</button>
+            
+            <div class="forgot-password">
+                <small>By registering, you agree to our terms of service</small>
+            </div>
+        </form>
+        
+        <!-- Guest Access Form -->
+        <div id="guestForm" class="auth-content">
+            <div class="guest-info">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem; text-align: center;">Free Guest Access</h3>
+                <p style="color: #6c757d; text-align: center; margin-bottom: 1.5rem;">
+                    Get instant unlimited access to our VPN service. No registration required!
+                </p>
+                
+                <div class="guest-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Unlimited Free Access</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>All Server Locations</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Full Encryption</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>No Logs Policy</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>High-Speed Connection</span>
+                    </div>
+                </div>
+                
+                <button type="button" class="login-btn" onclick="handleGuestAccess()">
+                    Start Free VPN Now
+                </button>
+                
+                <div class="guest-note">
+                    <small>Completely free forever. Register for additional features and preferences.</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="vpn-status">
+            <div class="status-indicator"></div>
+            <span>VPN Service Status: <strong>Offline</strong></span>
+        </div>
+    </div>
+
+    <script>
+        const baseURL = "http://100.90.249.20:8080/vpn-backend";
+
+        function switchTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update active form
+            document.querySelectorAll('.auth-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (tabName === 'login') {
+                document.getElementById('loginForm').classList.add('active');
+            } else if (tabName === 'register') {
+                document.getElementById('registerForm').classList.add('active');
+            } else if (tabName === 'guest') {
+                document.getElementById('guestForm').classList.add('active');
+            }
+            
+            clearMessages();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function clearMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                return showError('Please enter both username and password');
+            }
+            
+            const button = event.target.querySelector('button[type="submit"]');
+            button.textContent = 'Signing In...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`${baseURL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.status === "success") {
+                    showSuccess('Login successful! Redirecting...');
+                    localStorage.setItem("username", username);
+                    setTimeout(() => window.location.href = 'dashboard.html', 1500);
+                } else {
+                    showError(data.message || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+                console.error("Login error:", error);
+            }
+            
+            button.textContent = 'Sign In';
+            button.disabled = false;
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('reg_username').value;
+            const email = document.getElementById('reg_email').value;
+            const password = document.getElementById('reg_password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!username || !email || !password || !confirmPassword) {
+                return showError('Please fill in all fields');
+            }
+            
+            if (password !== confirmPassword) {
+                return showError('Passwords do not match');
+            }
+            
+            if (password.length < 6) {
+                return showError('Password must be at least 6 characters');
+            }
+            
+            const button = event.target.querySelector('button[type="submit"]');
+            button.textContent = 'Creating Account...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`${baseURL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&email=${encodeURIComponent(email)}`
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.status === "success") {
+                    showSuccess('Account created successfully! You can now login.');
+                    // Auto-fill login form
+                    document.getElementById('username').value = username;
+                    document.getElementById('password').value = '';
+                    // Switch to login tab
+                    switchTab('login');
+                } else {
+                    showError(data.message || 'Registration failed. Please try again.');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+                console.error("Registration error:", error);
+            }
+            
+            button.textContent = 'Create Account';
+            button.disabled = false;
+        }
+
+        function handleGuestAccess() {
+            const button = event.target;
+            button.textContent = 'Connecting...';
+            button.disabled = true;
+            
+            // Simulate guest login (no actual backend call needed)
+            setTimeout(() => {
+                localStorage.setItem("username", "guest");
+                showSuccess('Guest access granted! Redirecting...');
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
+            }, 1000);
+        }
+
+        function showForgotPassword() {
+            const email = prompt('Enter your email address:');
+            if (email) {
+                showSuccess('Password reset instructions sent to ' + email);
+            }
+        }
+
+        function checkVPNStatus() {
+            fetch(`${baseURL}/status`)
+                .then(res => res.json())
+                .then(data => {
+                    const statusElement = document.querySelector('.vpn-status');
+                    const statusText = document.querySelector('.vpn-status strong');
+                    
+                    if (data.status === 'online') {
+                        statusElement.classList.add('connected');
+                        statusText.textContent = 'Online';
+                    } else {
+                        statusElement.classList.remove('connected');
+                        statusText.textContent = 'Offline';
+                    }
+                })
+                .catch(() => {
+                    const statusElement = document.querySelector('.vpn-status');
+                    const statusText = document.querySelector('.vpn-status strong');
+                    statusElement.classList.remove('connected');
+                    statusText.textContent = 'Offline';
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up event listeners
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            // Tab switching
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+            
+            // Initial status check
+            checkVPNStatus();
+            setInterval(checkVPNStatus, 30000);
+        });
+    </script>
+</body>
+</html>

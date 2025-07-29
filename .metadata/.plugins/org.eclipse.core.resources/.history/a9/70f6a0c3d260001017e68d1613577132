@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Dashboard - Login</title>
+    <script>
+        const baseURL = "http://100.90.249.20:8080/vpn-backend";
+
+        async function login(event) {
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            const response = await fetch(`${baseURL}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+
+            });
+
+            const data = await response.json();
+            if (data.status === "success") {
+                alert("Login successful, Role: " + data.role);
+                localStorage.setItem("username", username);
+                window.location.href = "dashboard.html";
+            } else {
+                alert("Login failed: " + data.message);
+            }
+        }
+
+        async function register(event) {
+            event.preventDefault();
+            const username = document.getElementById("reg_username").value;
+            const password = document.getElementById("reg_password").value;
+            const email = document.getElementById("reg_email").value;
+
+            const response = await fetch(`${baseURL}/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&email=${encodeURIComponent(email)}`
+            });
+
+            const data = await response.json();
+            if (data.status === "success") {
+                alert("Registration successful: " + data.message);
+            } else {
+                alert("Registration failed: " + data.message);
+            }
+        }
+
+        async function guestAccess() {
+            alert("Free Guest Access Granted! Redirecting...");
+            localStorage.setItem("guest", "true");
+            window.location.href = "dashboard.html";
+        }
+    </script>
+</head>
+<body>
+<h2>Login</h2>
+<form onsubmit="login(event)">
+    Username: <input type="text" id="username" required><br>
+    Password: <input type="password" id="password" required><br>
+    <button type="submit">Login</button>
+</form>
+
+<h2>Register</h2>
+<form onsubmit="register(event)">
+    Username: <input type="text" id="reg_username" required><br>
+    Password: <input type="password" id="reg_password" required><br>
+    Email: <input type="email" id="reg_email" required><br>
+    <button type="submit">Register</button>
+</form>
+
+<h2>Guest</h2>
+<button onclick="guestAccess()">Guest Login</button>
+</body>
+</html>

@@ -1,0 +1,63 @@
+package com.vpn.backend;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class DeviceLogServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        try {
+            // Read raw JSON or form data
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = request.getReader();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+
+            String requestBody = sb.toString();
+            System.out.println("Received Logs: " + requestBody);
+
+            // Assume POST request is sent as form-data (key-value)
+            String username = request.getParameter("username");
+            String log_data = request.getParameter("log_data");
+            String ip = request.getRemoteAddr();
+            String device_info = request.getHeader("User-Agent");
+
+            // Insert into DB
+            try (Connection conn = DBUtil.getConnection()) {
+                String sql = "INSERT INTO vpn_logs (username, log_data, ip_address, device_info) VALUES (?, ?, ?, ?)";
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                stmt.setString(1, username);
+                stmt.setString(2, log_data);
+                stmt.setString(3, ip);
+                stmt.setString(4, device_info);
+                stmt.executeUpdate();
+            }
+
+            out.print("{\"status\":\"success\", \"message\":\"Log stored\"}");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.print("{\"status\":\"error\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+        out.print("{\"status\":\"success\", \"message\":\"GET received\"}");
+    }
+}
+
+

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Dashboard - Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log-section {
+            margin-bottom: 30px;
+        }
+        .status-message {
+            color: #666;
+            font-style: italic;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome, <span id="user"></span></h1>
+    <button id="logoutBtn">Logout</button>
+
+    <div class="log-section">
+        <h2>Device Log</h2>
+        <button id="postDeviceLogBtn">Post Device Log</button>
+    </div>
+
+    <div class="log-section">
+        <h2>User Logs</h2>
+        <button id="fetchUserBtn">Fetch User Logs</button>
+        <div id="userLogsStatus" class="status-message">No data fetched yet</div>
+        <div class="log-container">
+            <table id="userLogsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Log Data</th>
+                        <th>IP Address</th>
+                        <th>Device Info</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="log-section">
+        <h2>Training Logs</h2>
+        <button id="fetchTrainingBtn">Fetch Training Logs</button>
+        <div id="trainingLogsStatus" class="status-message">No data fetched yet</div>
+        <div class="log-container">
+            <table id="trainingLogsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Log Data</th>
+                        <th>IP Address</th>
+                        <th>Device Info</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="log-section">
+        <h2>Audit Logs</h2>
+        <button id="fetchAuditBtn">Fetch Audit Logs</button>
+        <div id="auditLogsStatus" class="status-message">No data fetched yet</div>
+        <div class="log-container">
+            <table id="auditLogsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Log Data</th>
+                        <th>IP Address</th>
+                        <th>Device Info</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const baseURL = "http://100.90.249.20:8080/vpn-backend";
+        const username = localStorage.getItem("username") || "guest";
+        
+        // Set username display
+        document.getElementById("user").textContent = username;
+
+        // Configure fetch defaults
+        const fetchConfig = {
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        };
+
+        // Improved table population with better error handling
+        function populateTable(tableId, statusId, data) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            const statusElement = document.getElementById(statusId);
+            tableBody.innerHTML = '';
+            
+            if (!data) {
+                statusElement.textContent = "Error: No data received from server";
+                return;
+            }
+
+            // Handle different response formats
+            let logs = [];
+            if (Array.isArray(data)) {
+                logs = data;
+            } else if (data.data && Array.isArray(data.data)) {
+                logs = data.data;
+            } else if (data.logs && Array.isArray(data.logs)) {
+                logs = data.logs;
+            } else if (typeof data === 'object') {
+                logs = [data]; // Single object
+            }
+
+            if (logs.length === 0) {
+                statusElement.textContent = "No logs found";
+                return;
+            }
+
+            statusElement.textContent = `Showing ${logs.length} log entries`;
+            
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.id || '-'}</td>
+                    <td>${log.log_data || '-'}</td>
+                    <td>${log.ip_address || '-'}</td>
+                    <td title="${log.device_info || ''}">
+                        ${log.device_info ? 
+                         log.device_info.substring(0, 30) + 
+                         (log.device_info.length > 30 ? '...' : '') : '-'}
+                    </td>
+                    <td>${log.timestamp || '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Enhanced fetch functions with debugging
+        async function fetchWithLogging(endpoint, tableId, statusId) {
+            try {
+                document.getElementById(statusId).textContent = "Loading...";
+                console.log(`Fetching ${endpoint}...`);
+                
+                const response = await fetch(endpoint, fetchConfig);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                console.log(`Data from ${endpoint}:`, data);
+                
+                populateTable(tableId, statusId, data);
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                document.getElementById(statusId).textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Fetch functions
+        async function fetchUserLogs() {
+            await fetchWithLogging(
+                `${baseURL}/fetch-user-logs?username=${encodeURIComponent(username)}`,
+                'userLogsTable',
+                'userLogsStatus'
+            );
+        }
+
+        async function fetchTrainingLogs() {
+            await fetchWithLogging(
+                `${baseURL}/fetch-training-logs?username=${encodeURIComponent(username)}`,
+                'trainingLogsTable',
+                'trainingLogsStatus'
+            );
+        }
+
+        async function fetchAuditLogs() {
+            await fetchWithLogging(
+                `${baseURL}/fetch-audit-logs`,
+                'auditLogsTable',
+                'auditLogsStatus'
+            );
+        }
+
+        async function postDeviceLog() {
+            const log = prompt("Enter log data:");
+            if (!log) return;
+            
+            try {
+                const response = await fetch(`${baseURL}/logs`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(username)}&log_data=${encodeURIComponent(log)}`
+                });
+                const data = await response.json();
+                alert(data.message || "Log posted successfully");
+                fetchUserLogs(); // Refresh user logs
+            } catch (error) {
+                console.error("Error posting log:", error);
+                alert("Failed to post log");
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Button event listeners
+            document.getElementById("fetchUserBtn").addEventListener("click", fetchUserLogs);
+            document.getElementById("fetchTrainingBtn").addEventListener("click", fetchTrainingLogs);
+            document.getElementById("fetchAuditBtn").addEventListener("click", fetchAuditLogs);
+            document.getElementById("postDeviceLogBtn").addEventListener("click", postDeviceLog);
+            document.getElementById("logoutBtn").addEventListener("click", logout);
+            
+            // Load initial data
+            fetchUserLogs();
+            fetchTrainingLogs();
+            fetchAuditLogs();
+        });
+    </script>
+</body>
+</html>

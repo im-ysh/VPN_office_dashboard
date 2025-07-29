@@ -1,0 +1,15 @@
+// === DBUtil.java ===
+package com.vpn.backend;
+
+import java.sql.*;
+
+public class DBUtil {
+    public static Connection getConnection() throws Exception {
+        String url = "jdbc:mysql://localhost:3306/vpn_dashboard";
+        String user = "root"; //  MySQL user
+        String password = "vaishnavi"; //  MySQL password
+
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        return DriverManager.getConnection(url, user, password);
+    }
+}

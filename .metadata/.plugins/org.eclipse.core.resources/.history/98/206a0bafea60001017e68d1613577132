@@ -1,0 +1,52 @@
+package com.vpn.backend;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import javax.servlet.annotation.*;
+
+@WebServlet("/fetch-audit-logs")
+public class SystemAuditServlet extends HttpServlet {
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+    	
+    	// Add to ALL your servlets' doGet() and doPost() methods
+    	response.setHeader("Access-Control-Allow-Origin", "*");
+    	response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    	response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        try (Connection conn = DBUtil.getConnection()) {
+            String sql = "SELECT action_by, action_type, target_table, details, action_time FROM system_audit ORDER BY action_time DESC";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+
+            StringBuilder json = new StringBuilder();
+            json.append("[");
+
+            boolean first = true;
+            while (rs.next()) {
+                if (!first) json.append(",");
+                json.append("{")
+                    .append("\"action_by\":\"").append(rs.getString("action_by")).append("\",")
+                    .append("\"action_type\":\"").append(rs.getString("action_type")).append("\",")
+                    .append("\"target_table\":\"").append(rs.getString("target_table")).append("\",")
+                    .append("\"details\":\"").append(rs.getString("details")).append("\",")
+                    .append("\"action_time\":\"").append(rs.getTimestamp("action_time")).append("\"")
+                    .append("}");
+                first = false;
+            }
+
+            json.append("]");
+            out.print(json.toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.print("{\"status\":\"error\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+}

@@ -1,0 +1,14 @@
+package com.vpn.backend;
+
+import java.sql.*;
+
+public class DBUtil {
+	public static Connection getConnection() throws Exception {
+		String url = "jdbc:mysql://100.75.82.36:3306/vpn_dashboard?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000";
+		String username = "root";
+		String password = "vaishnavi";
+		
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		return DriverManager.getConnection(url,username,password);		
+	}
+}

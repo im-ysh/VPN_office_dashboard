@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Dashboard - Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome, <span id="user"></span></h1>
+    <button id="logoutBtn">Logout</button>
+
+    <div class="log-section">
+        <h2>Device Log</h2>
+        <button id="postDeviceLogBtn">Post Device Log</button>
+    </div>
+
+    <div class="log-section">
+        <h2>User Logs</h2>
+        <button id="fetchUserBtn">Fetch User Logs</button>
+        <pre id="userLogs">No data fetched yet</pre>
+    </div>
+
+    <div class="log-section">
+        <h2>Training Logs</h2>
+        <button id="fetchTrainingBtn">Fetch Training Logs</button>
+        <pre id="trainingLogs">No data fetched yet</pre>
+    </div>
+
+    <div class="log-section">
+        <h2>Audit Logs</h2>
+        <button id="fetchAuditBtn">Fetch Audit Logs</button>
+        <pre id="auditLogs">No data fetched yet</pre>
+    </div>
+
+    <script>
+        const baseURL = "http://100.90.249.20:8080/vpn-backend";
+        const username = localStorage.getItem("username") || "guest";
+        
+        // Set username display
+        document.getElementById("user").textContent = username;
+
+        // Configure fetch defaults
+        const fetchConfig = {
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        };
+
+        // Improved fetch with error handling
+        async function safeFetch(url, options = {}) {
+            try {
+                const response = await fetch(url, {...fetchConfig, ...options});
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        // Fetch functions
+        async function fetchUserLogs() {
+            const data = await safeFetch(
+                `${baseURL}/fetch-user-logs?username=${encodeURIComponent(username)}`
+            );
+            document.getElementById("userLogs").textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function fetchTrainingLogs() {
+            const data = await safeFetch(
+                `${baseURL}/fetch-training-logs?username=${encodeURIComponent(username)}`
+            );
+            document.getElementById("trainingLogs").textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function fetchAuditLogs() {
+            const data = await safeFetch(`${baseURL}/fetch-audit-logs`);
+            document.getElementById("auditLogs").textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function postDeviceLog() {
+            const log = prompt("Enter log data:");
+            if (!log) return;
+            
+            const data = await safeFetch(`${baseURL}/logs`, {
+                method: 'POST',
+                body: `username=${encodeURIComponent(username)}&log_data=${encodeURIComponent(log)}`
+            });
+            
+            alert(data.message || "Log posted successfully");
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        // Event listeners (modern approach)
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById("fetchUserBtn").addEventListener("click", fetchUserLogs);
+            document.getElementById("fetchTrainingBtn").addEventListener("click", fetchTrainingLogs);
+            document.getElementById("fetchAuditBtn").addEventListener("click", fetchAuditLogs);
+            document.getElementById("postDeviceLogBtn").addEventListener("click", postDeviceLog);
+            document.getElementById("logoutBtn").addEventListener("click", logout);
+        });
+    </script>
+</body>
+</html>
